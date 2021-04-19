@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if task == "quote" or task == "quoted" %}
+        Quote
+    {% elif task == "buy" %}
+        Buy
+    {% elif task == "sell" %}
+        Sell
+    {% endif %}
+{% endblock %}
+
+
+
+{% block main %}
+    {% if task == "quote" %}
+        <form action="/quote" method="post">
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Symbol" type="text">
+            </div>
+            <button class="btn btn-primary" type="submit">Quote</button>
+        </form>
+
+    {% elif task == "quoted" %}
+        <p>A share of {{ company.name }} ({{ company.symbol }}) costs {{ company.price | usd }}</p>
+
+    {% elif task == "buy" %}
+        <form action="/buy" method="post">
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Symbol" type="text">
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" class="form-control" min="1" name="shares" placeholder="Shares" type="number">
+            </div>
+            <button class="btn btn-primary" type="submit">Buy</button>
+        </form>
+
+    {% elif task == "sell" %}
+        <form action="/sell" method="post">
+            <div class="form-group">
+                <select class="form-control" name="symbol">
+                    <option disabled selected>Symbol</option>
+                    {% for symbol in symbols %}
+                        <option value="{{ symbol['symbol'] }}">{{ symbol["symbol"] | upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" class="form-control" min="1" name="shares" placeholder="Shares" type="number">
+            </div>
+            <button class="btn btn-primary" type="submit">Sell</button>
+        </form>
+
+    {% endif %}
+{% endblock %}

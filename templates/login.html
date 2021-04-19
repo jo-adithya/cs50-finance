@@ -1,0 +1,42 @@
+{% extends "layout_login.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block login_title %}
+    Log In to Account
+{% endblock %}
+
+{% block form %}
+    <form action="/login" method="post">
+        <div class="form-group">
+            <input autocomplete="off" minlength="2" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" class="form-control" minlength="8" name="password" placeholder="Password" type="password">
+        </div>
+        <button class="form-submit white" type="submit">Log In</button>
+    </form>
+{% endblock %}
+
+
+
+{% block greet_title %}
+    Hello, Friend!
+{% endblock %}
+
+
+
+{% block greet_body %}
+    Fill up your personal information and start journey with us!
+{% endblock %}
+
+
+
+
+{% block greet_form %}
+    <form action="/register" method="get">
+        <button type="submit" class="submit-info white">Register</button>
+    </form>
+{% endblock %}

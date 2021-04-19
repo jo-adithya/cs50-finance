@@ -1,0 +1,98 @@
+body {
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+main {
+    border-radius: 20px;
+    box-shadow: 5px 5px 30px #444;
+    width: 950px;
+}
+
+.company-name {
+    font-size: 15px;
+    margin-bottom: 30px;
+    align-self: flex-start;
+    font-weight: 700;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.subtitle {
+    font-size: 28px;
+    font-weight: 600;
+}
+
+hr {
+    width: 50px;
+    height: 3px;
+    margin: 20px auto 30px auto;
+}
+
+button {
+    border-radius: 50px;
+    width: 150px;
+    padding: 10px 0;
+}
+
+.submit-info {
+    margin-top: 40px;
+    border: solid 1px white;
+    background-color: inherit;
+}
+
+.form-submit {
+    background-color: #5dbb63;
+    border: none;
+    margin-top: 25px;
+}
+
+.info {
+    background-color: #5dbb63;
+    width: 38%;
+    padding: 50px;
+}
+
+.login {
+    width: 62%;
+    padding: 20px;
+}
+
+.login-form {
+    margin: 20px 0 60px 0;
+}
+
+.form-control {
+    width: 300px !important;
+    font-size: 16px;
+    padding: 20px 16px;
+}
+
+.greet-body {
+    font-size: 16px;
+    font-weight: 200;
+}
+
+.teal {
+    color: #5dbb63;
+}
+
+.white {
+    color: white;
+}
+
+.teal-bg {
+    background-color: #5dbb63;
+}
+
+.white-bg {
+    background-color: white;
+}
+
+.form-submit {
+    width: 200px;
+}
+

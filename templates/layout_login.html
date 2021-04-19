@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, width=device-width">
+
+        <!-- http://getbootstrap.com/docs/4.5/ -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+        <!-- https://favicon.io/emoji-favicons/money-mouth-face/ -->
+        <link href="/static/favicon.ico" rel="icon">
+
+        <link href="/static/styles.css" rel="stylesheet">
+        <link href="/static/login.css" rel="stylesheet">
+
+        <!-- http://getbootstrap.com/docs/4.5/ -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+
+        <title>C$50 Finance: {% block title %}{% endblock %}</title>
+
+    </head>
+
+    <body class="d-flex justify-content-center align-items-center">
+        <main class="d-flex justify-content-center">
+            <div class="login d-flex flex-column align-itmes-center justify-content-center">
+                <div class="company-name"><span class="blue">C</span><span class="red">$</span><span class="yellow">5</span><span class="green">0</span> <span class="red">Finance</span></div>
+                <div class="title teal">{% block login_title %}{% endblock %}<br><hr class="teal-bg"></div>
+                <div class="login-form">
+                    {% block form %}{% endblock %}
+                </div>
+                <footer class="small text-center text-muted">
+                    Data provided for free by <a href="https://iextrading.com/developer">IEX</a>. View <a href="https://iextrading.com/api-exhibit-a/">IEX’s Terms of Use</a>.
+                </footer>
+            </div>
+            <div class="info d-flex flex-column align-itmes-center justify-content-center">
+                <div class="subtitle white">
+                    {% block greet_title %}{% endblock %}<br><hr class="white-bg">
+                </div>
+                <div class="greet-body white">
+                    {% block greet_body %}{% endblock %}
+                </div>
+                <div class="greet-form">
+                    {% block greet_form %}{% endblock %}
+                </div>
+            </div>
+        </main>
+    </body>
+
+</html>

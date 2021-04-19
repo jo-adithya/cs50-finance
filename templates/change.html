@@ -1,0 +1,44 @@
+{% extends "layout_login.html" %}
+
+{% block title %}
+    Change Password
+{% endblock %}
+
+
+
+{% block login_title %}
+    Change Password
+{% endblock %}
+
+
+
+{% block form %}
+    <form action="/change" method="post">
+        <div class="form-group">
+            <input autocomplete="off" minlength="8" class="form-control" name="current" placeholder="Current Password" type="password" autofocus>
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" minlength="8" class="form-control" name="new" placeholder="New Password" type="password">
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" minlength="8" class="form-control" name="confirm" placeholder="Confirm Password" type="password">
+        </div>
+        <button class="form-submit white" type="submit">Change Password</button>
+    </form>
+{% endblock %}
+
+
+
+{% block greet_title %}
+    Return
+{% endblock %}
+
+{% block greet_body %}
+    <img src="https://www.sophos.com/en-us/medialibrary/SophosNext/Images/Products/CentralDeviceEncryption/banner-computer.png">
+{% endblock %}
+
+{% block greet_form %}
+    <form action="/" method="get">
+        <button type="submit" class="submit-info white">Cancel</button>
+    </form>
+{% endblock %}
