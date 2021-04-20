@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+
+{% block main %}
+    <div class="info" role="alert"></div><br>
+    <div class="form-group">
+        <input autocomplete="off" autofocus class="form-control" id="symbol" name="symbol" placeholder="Symbol" type="text">
+    </div>
+    <button class="btn btn-primary" type="submit">Quote</button>
+{% endblock %}
+
+{% block script %}
+    $(document).ready(function() {
+        $('.btn').on('click', function() {
+            $.ajax({
+                type: 'POST',
+                url: '/quote',
+                data: {
+                    symbol: $('#symbol').val()
+                },
+                success: function(company) {
+                    html = 'A share of ' + company.name + ' (<a href="#" class="alert-link">' + company.symbol + '</a>) costs $' + company.price + '.';
+                    $('.info').html(html);
+                    $('.info').addClass('alert alert-primary');
+                },
+                error: function() {
+                    alert("Invalid Symbol!");
+                }
+            })
+        })
+    })
+{% endblock %}

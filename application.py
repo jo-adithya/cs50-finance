@@ -1,7 +1,7 @@
 import os
 
 from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, redirect, render_template, request, session, jsonify
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
@@ -103,7 +103,7 @@ def buy():
         return redirect("/")
 
     # Method: "GET"
-    return render_template("interface.html", task="buy")
+    return render_template("buy.html")
 
 
 @app.route("/history")
@@ -175,9 +175,8 @@ def quote():
         if not company:
             return apology("Invalid Symbol")
 
-        return render_template("interface.html", task="quoted", company=company)
-    else:
-        return render_template("interface.html", task="quote")
+        return jsonify(company)
+    return render_template("quote.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -263,7 +262,7 @@ def sell():
         return redirect("/")
 
     # Method: "GET"
-    return render_template("interface.html", task="sell", symbols=stocks)
+    return render_template("sell.html", symbols=stocks)
 
 
 @app.route("/change", methods=["GET", "POST"])
