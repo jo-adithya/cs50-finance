@@ -23,14 +23,17 @@
                     symbol: $('#symbol').val()
                 },
                 success: function(company) {
-                    html = 'A share of ' + company.name + ' (<a href="#" class="alert-link">' + company.symbol + '</a>) costs $' + company.price + '.';
+                    html = 'A share of <a class="alert-link">' + company.name + '</a> (<a id="company-symbol" class="alert-link">' + company.symbol + '</a>) costs <a class="alert-link">$' + company.price + '</a>.';
                     $('.info').html(html);
                     $('.info').addClass('alert alert-primary');
                 },
                 error: function() {
                     alert("Invalid Symbol!");
                 }
-            })
-        })
-    })
+            });
+        });
+        $('.info').on('click', 'a', function() {
+            window.location.href = '/buy?symbol=' + $('#company-symbol').html();
+        });
+    });
 {% endblock %}

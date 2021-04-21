@@ -103,6 +103,11 @@ def buy():
         return redirect("/")
 
     # Method: "GET"
+    if request.args.get("symbol"):
+        company = lookup(request.args.get("symbol"))
+        if not company:
+            return apology("Invalid Symbol")
+        return render_template("buy.html", symbol=company["symbol"])
     return render_template("buy.html")
 
 
