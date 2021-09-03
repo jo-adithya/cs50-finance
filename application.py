@@ -8,16 +8,19 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 import datetime
-
-from helpers import apology, login_required, lookup, usd
+import requests
+import urllib.parse
 
 # Configure application
 app = Flask(__name__)
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1", "sqlite:///finance.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    "DATABASE_URL1", "sqlite:///finance.db"
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -44,6 +47,78 @@ class Transaction(db.Model):
 
 
 db.create_all()
+
+
+# Helper functions
+def apology(message, code=400):
+    """Render message as an apology to user."""
+
+    def escape(s):
+        """
+        Escape special characters.
+
+        https://github.com/jacebrowning/memegen#special-characters
+        """
+        for old, new in [
+            ("-", "--"),
+            (" ", "-"),
+            ("_", "__"),
+            ("?", "~q"),
+            ("%", "~p"),
+            ("#", "~h"),
+            ("/", "~s"),
+            ("\"", "''"),
+        ]:
+            s = s.replace(old, new)
+        return s
+
+    return render_template("apology.html", top=code, bottom=escape(message)), code
+
+
+def login_required(f):
+    """
+    Decorate routes to require login.
+
+    https://flask.palletsprojects.com/en/1.1.x/patterns/viewdecorators/
+    """
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/login")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def lookup(symbol):
+    """Look up quote for symbol."""
+
+    # Contact API
+    try:
+        api_key = os.environ.get("API_KEY")
+        url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+
+    # Parse response
+    try:
+        quote = response.json()
+        return {
+            "name": quote["companyName"],
+            "price": float(quote["latestPrice"]),
+            "symbol": quote["symbol"],
+        }
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def usd(value):
+    """Format value as USD."""
+    return f"${value:,.2f}"
+
 
 # Ensure responses aren't cached
 @app.after_request
