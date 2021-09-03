@@ -21,9 +21,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     "DATABASE_URL1", "sqlite:///finance.db"
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config[
-    "SECRET_KEY"
-] = '\x9b\xb2VO\ryn\xdd\x05\xdd8ZE\x86A\xb4\x14\xa7\x86\x84B\xa6m\xb6'
 db = SQLAlchemy(app)
 
 # Create Database Tables
@@ -63,10 +60,9 @@ def after_request(response):
 # Custom filter
 app.jinja_env.filters["usd"] = usd
 
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
+# Configure session
 app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
+app.secret_key = os.environ.get("SECRET_KEY")
 Session(app)
 
 # Make sure API key is set
