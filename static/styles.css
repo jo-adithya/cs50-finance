@@ -53,3 +53,7 @@ main tfoot {
 table {
     text-align: left;
 }
+
+header {
+    margin: 25px;
+}

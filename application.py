@@ -1,6 +1,8 @@
 import os
 
-from cs50 import SQL
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
+from sqlalchemy import inspect
 from flask import Flask, flash, redirect, render_template, request, session, jsonify
 from flask_session import Session
 from tempfile import mkdtemp
@@ -15,7 +17,33 @@ app = Flask(__name__)
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///finance.db")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
+# Create Database Tables
+class Company(db.Model):
+    symbol = db.Column(db.String(250), nullable=False, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(250), nullable=False, unique=True)
+    hash = db.Column(db.String(250), nullable=False)
+    cash = db.Column(db.Float, nullable=False, default=10000.00)
+
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    symbol = db.Column(db.String(250), nullable=False)
+    shares = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    time = db.Column(db.DateTime, nullable=False)
+
+
+db.create_all()
 
 # Ensure responses aren't cached
 @app.after_request
@@ -35,9 +63,6 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
@@ -50,18 +75,46 @@ def index():
     user_id = session["user_id"]
 
     # Get user balance
-    user = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
+    user = User.query.filter_by(id=user_id).first()
+    user = user.__dict__
+    print(user["cash"])
 
     # SUM all shares of user's transactions
-    shares = db.execute("SELECT transactions.symbol, company.name, SUM(transactions.shares) FROM transactions INNER JOIN company ON transactions.symbol = company.symbol GROUP BY transactions.user_id, transactions.symbol HAVING SUM(transactions.shares) > 0 AND transactions.user_id = ?", user_id)
-    # Check price of each shares and calculate grand total
-    total = user[0]["cash"]
-    for share in shares:
-        share["price"] = lookup(share["symbol"])["price"]
-        share["total"] = share["SUM(transactions.shares)"] * share["price"]
-        total += share["total"]
+    shares = (
+        db.session.query(
+            Transaction.symbol.label('symbol'),
+            db.func.sum(Transaction.shares).label('shares'),
+        )
+        .filter(Transaction.user_id == user_id)
+        .group_by(Transaction.symbol)
+        .having(db.func.sum(Transaction.shares) > 0)
+        .all()
+    )
+    print(shares)
 
-    return render_template("index.html", shares=shares, balance=user[0]["cash"], total=total)
+    # Check price of each shares and calculate grand total
+    total = user["cash"]
+    new_shares = []
+    print()
+    for share in shares:
+        company = lookup(share[0])
+
+        new_shares.append(
+            {
+                "symbol": share[0],
+                "shares": share[1],
+                "price": company["price"],
+                "name": company["name"],
+                "total": company["price"] * share[1],
+            }
+        )
+
+        total += new_shares[-1]["total"]
+    print(new_shares)
+
+    return render_template(
+        "index.html", shares=new_shares, balance=user["cash"], total=total
+    )
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -83,22 +136,32 @@ def buy():
 
         shares = int(shares)
         user_id = session["user_id"]
-        user = db.execute("SELECT username, cash FROM users WHERE id = ?", user_id)
-        if company["price"] * shares > user[0]["cash"]:
+        user = db.session.query(User).filter(User.id == user_id).first()
+        if company["price"] * shares > user.cash:
             return apology("Insufficient Fund")
 
-        time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        price = company["price"]
+        name = company["name"]
+        time = datetime.datetime.now()
 
         # Update user's cash
-        db.execute("UPDATE users SET cash = ? WHERE id = ?", user[0]["cash"] - company["price"] * shares, user_id)
+        user.cash -= company["price"]
+        db.session.commit()
 
         # Update company table for new company
-        if not len(db.execute("SELECT symbol FROM company WHERE symbol = ?", symbol)):
-            db.execute("INSERT INTO company (symbol, name) VALUES (?, ?)", symbol, company["name"])
+        company = db.session.query(Company).filter(Company.symbol == symbol).first()
+        if not company:
+            new_company = Company(symbol=symbol, name=name)
+            db.session.add(new_company)
+            db.session.commit()
 
         # Insert new transaction
-        db.execute("INSERT INTO transactions (user_id, symbol, shares, price, time) VALUES (?, ?, ?, ?, ?)",
-                   user_id, symbol, shares, company["price"], time)
+        new_transaction = Transaction(
+            user_id=user_id, symbol=symbol, shares=shares, price=price, time=time
+        )
+        db.session.add(new_transaction)
+        db.session.commit()
+
         flash("Bought!")
         return redirect("/")
 
@@ -115,7 +178,9 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    transactions = db.execute("SELECT symbol, shares, price, time FROM transactions WHERE user_id = ?", session["user_id"])
+    transactions = db.session.query(Transaction).filter(
+        Transaction.user_id == session["user_id"]
+    )
     return render_template("history.html", transactions=transactions)
 
 
@@ -138,14 +203,19 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = (
+            db.session.query(User)
+            .filter(User.username == request.form.get("username"))
+            .first()
+        )
+        print(rows)
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        if not rows or not check_password_hash(rows.hash, request.form.get("password")):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        session["user_id"] = rows.id
 
         # Redirect user to home page
         flash("Logged In!")
@@ -204,14 +274,17 @@ def register():
         if password != confirm:
             return apology("Password didn't match")
 
-        users = db.execute("SELECT * FROM users WHERE username = (?)", username)
+        user = db.session.query(User).filter(User.username == username).all()
 
-        if len(users) != 0:
+        if user:
             return apology("Username already taken")
 
         # Hash password so it can't be cracked by other people
         hash_password = generate_password_hash(password)
-        user_id = db.execute("INSERT INTO users (username, hash) VALUES (?, ?)", username, hash_password)
+        new_user = User(username=username, hash=hash_password)
+        db.session.add(new_user)
+        db.session.commit()
+        user_id = new_user.id
 
         # Remember which user has logged in
         session["user_id"] = user_id
@@ -230,8 +303,14 @@ def sell():
     user_id = session["user_id"]
 
     # Stocks that the user currently has
-    stocks = db.execute(
-        "SELECT symbol, SUM(shares) FROM transactions GROUP BY user_id, symbol HAVING SUM(shares) > 0 AND user_id = ?", session["user_id"])
+    stocks = (
+        db.session.query(
+            Transaction.symbol, db.func.sum(Transaction.shares).label("shares")
+        )
+        .filter(Transaction.user_id == user_id)
+        .group_by(Transaction.symbol)
+        .having(db.func.sum(Transaction.shares) > 0)
+    )
     """Sell shares of stock"""
     if request.method == "POST":
         symbol = request.form.get("symbol")
@@ -248,21 +327,29 @@ def sell():
 
         # Check if the user has the stocks
         shares = int(shares)
-        current_stock = [stock for stock in stocks if stock["symbol"] == symbol]
+        current_stock = [stock for stock in stocks if stock[0] == symbol]
         if len(current_stock) != 1:
             return apology("Insufficient shares")
-        if current_stock[0]["SUM(shares)"] < shares:
+        if current_stock[0][1] < shares:
             return apology("Insufficient shares")
 
-        user = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
-        time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        user = db.session.query(User).filter(User.id == user_id).first()
+        time = datetime.datetime.now()
 
         # Update user's cash
-        db.execute("UPDATE users SET cash = ? WHERE id = ?", user[0]["cash"] + company["price"] * shares, user_id)
+        user.cash += company["price"] * shares
+        db.session.commit()
 
         # Insert new transaction
-        db.execute("INSERT INTO transactions (user_id, symbol, shares, price, time) VALUES (?, ?, ?, ?, ?)",
-                   user_id, symbol, -shares, company["price"], time)
+        new_transaction = Transaction(
+            user_id=user_id,
+            symbol=symbol,
+            shares=-shares,
+            price=company["price"],
+            time=time,
+        )
+        db.session.add(new_transaction)
+        db.session.commit()
         flash("Sold!")
         return redirect("/")
 
@@ -280,7 +367,9 @@ def change():
         confirm_pass = request.form.get("confirm")
 
         # Validate user input
-        curr_pass = db.execute("SELECT hash FROM users WHERE id = ?", session["user_id"])
+        curr_pass = db.execute(
+            "SELECT hash FROM users WHERE id = ?", session["user_id"]
+        )
 
         if not check_password_hash(curr_pass[0]["hash"], curr_input):
             return apology("Current password didn't match")
@@ -289,7 +378,11 @@ def change():
         if new_pass != confirm_pass:
             return apology("New password didn't match")
 
-        db.execute("UPDATE users SET hash = ? WHERE id = ?", generate_password_hash(new_pass), session["user_id"])
+        db.execute(
+            "UPDATE users SET hash = ? WHERE id = ?",
+            generate_password_hash(new_pass),
+            session["user_id"],
+        )
         return redirect("/")
 
     # Method: "GET"
