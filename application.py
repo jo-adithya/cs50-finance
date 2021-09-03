@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -9,6 +10,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 import datetime
+import redis
 
 from helpers import apology, login_required, lookup, usd
 
@@ -61,9 +63,13 @@ def after_request(response):
 app.jinja_env.filters["usd"] = usd
 
 # Configure session
-app.config["SESSION_PERMANENT"] = False
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-print(os.environ.get("SECRET_KEY"))
+url = urlparse(os.environ.get("REDIS_TLS_URL"))
+r = redis.Redis(host=url.hostname, port=url.port, username=url.username, password=url.password, ssl=True, ssl_cert_reqs=None)
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.secret_key = os.environ.get("SECRET_KEY")
+app.config.from_object(__name__)
 Session(app)
 
 # Make sure API key is set
