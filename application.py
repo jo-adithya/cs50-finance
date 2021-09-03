@@ -84,6 +84,7 @@ def login_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        print(session)
         if session.get("user_id") is None:
             return redirect("/login")
         return f(*args, **kwargs)
@@ -349,7 +350,7 @@ def register():
         if password != confirm:
             return apology("Password didn't match")
 
-        user = db.session.query(User).filter(User.username == username).all()
+        user = db.session.query(User).filter(User.username == username).first()
 
         if user:
             return apology("Username already taken")
@@ -363,6 +364,7 @@ def register():
 
         # Remember which user has logged in
         session["user_id"] = user_id
+        print('\nregister', '\n', session, '\n')
 
         # Redirect to home page
         flash("Registered!")
