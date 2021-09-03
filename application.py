@@ -62,7 +62,8 @@ app.jinja_env.filters["usd"] = usd
 
 # Configure session
 app.config["SESSION_PERMANENT"] = False
-app.secret_key = os.environ.get("SECRET_KEY")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+print(os.environ.get("SECRET_KEY"))
 Session(app)
 
 # Make sure API key is set
