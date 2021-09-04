@@ -4,5 +4,4 @@ Flask-Session
 requests
 gunicorn
 flask_sqlalchemy
-redis
 psycopg2-binary
