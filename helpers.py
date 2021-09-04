@@ -37,18 +37,13 @@ def login_required(f):
 
 def lookup(symbol):
     """Look up quote for symbol."""
-    print('\n\n', 'Lookup', '\n\n')
-
     # Contact API
     try:
         api_key = os.environ.get("API_KEY")
         url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
-        print(f'\n\nhttps://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}\n\n')
         response = requests.get(url)
-        print('\n\n' , response, '\n', response.__dict__, '\n\n')
         response.raise_for_status()
     except requests.RequestException:
-        print('\n\nBad REQUESTTTTT\n\n')
         return None
 
     # Parse response
@@ -60,7 +55,6 @@ def lookup(symbol):
             "symbol": quote["symbol"]
         }
     except (KeyError, TypeError, ValueError):
-        print('Key Error')
         return None
 
 

@@ -77,7 +77,6 @@ def index():
     # Get user balance
     user = User.query.filter_by(id=user_id).first()
     user = user.__dict__
-    print(user["cash"])
 
     # SUM all shares of user's transactions
     shares = (
@@ -90,12 +89,11 @@ def index():
         .having(db.func.sum(Transaction.shares) > 0)
         .all()
     )
-    print(shares)
 
     # Check price of each shares and calculate grand total
     total = user["cash"]
     new_shares = []
-    print()
+
     for share in shares:
         company = lookup(share[0])
 
@@ -110,7 +108,6 @@ def index():
         )
 
         total += new_shares[-1]["total"]
-    print(new_shares)
 
     return render_template(
         "index.html", shares=new_shares, balance=user["cash"], total=total
@@ -145,7 +142,7 @@ def buy():
         time = datetime.datetime.now()
 
         # Update user's cash
-        user.cash -= company["price"]
+        user.cash -= company["price"] * shares
         db.session.commit()
 
         # Update company table for new company
@@ -208,7 +205,6 @@ def login():
             .filter(User.username == request.form.get("username"))
             .first()
         )
-        print(rows)
 
         # Ensure username exists and password is correct
         if not rows or not check_password_hash(rows.hash, request.form.get("password")):
@@ -244,12 +240,10 @@ def quote():
         symbol = request.form.get("symbol")
 
         if symbol == "":
-            print('\n\nInvaliddddd\n\n')
             return apology("Invalid Symbol")
 
         company = lookup(symbol)
         if not company:
-            print('\n\nInvaliddd Companyyy\n\n')
             return apology("Invalid Symbol")
 
         return jsonify(company)
@@ -290,7 +284,6 @@ def register():
 
         # Remember which user has logged in
         session["user_id"] = user_id
-        print('\nregister', '\n', session, '\n')
 
         # Redirect to home page
         flash("Registered!")
