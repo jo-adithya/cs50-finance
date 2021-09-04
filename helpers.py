@@ -45,6 +45,7 @@ def lookup(symbol):
         url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
         print(f'\n\nhttps://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}\n\n')
         response = requests.get(url)
+        print('\n\n' , response, '\n', response.__dict__, '\n\n')
         response.raise_for_status()
     except requests.RequestException:
         print('\n\nBad REQUESTTTTT\n\n')
